@@ -31,7 +31,7 @@ enum msm_i2_debug_level {
 	if (CONFIG_I2C_MSM_DEBUG) {\
 		if (ctrl->dbgfs.dbg_lvl >= dbg_level)\
 			dev_info(ctrl->dev, pr_fmt(fmt), ##__VA_ARGS__);\
-	}\
+		}\
 	} while (0)
 
 #define BIT_IS_SET(val, idx)        ((val >> idx) & 0x1)
