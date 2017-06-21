@@ -21,7 +21,6 @@
  */
 
 #include <linux/moduleparam.h>
-#include <linux/earlysuspend.h>
 #include <linux/cpufreq.h>
 #include <linux/workqueue.h>
 #include <linux/cpu.h>
