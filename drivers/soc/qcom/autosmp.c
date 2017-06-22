@@ -62,7 +62,7 @@ static struct asmp_param_struct {
 	.scroff_single_core = true,
 	.max_cpus = 4,
 	.min_cpus = 1,
-	.cpufreq_up = 90,
+	.cpufreq_up = 76,
 	.cpufreq_down = 40,
 	.cycle_up = 1,
 	.cycle_down = 1,
