@@ -42,7 +42,7 @@
 #define HOTPLUG_ENABLED 0
 #define DEBUG 0
 #define ASMP_TAG "AutoSMP: "
-#define ASMP_STARTDELAY 20000
+#define ASMP_STARTDELAY 40000
 
 struct asmp_cpudata_t {
 	long long unsigned int times_hotplugged;
