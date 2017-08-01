@@ -127,7 +127,11 @@ static int recover_dentry(struct inode *inode, struct page *ipage,
 		goto out;
 	}
 retry:
+#ifdef F2FS_OPT3_OEM_MODS
+	de = __f2fs_find_entry(dir, &fname, &page, NULL);
+#else
 	de = __f2fs_find_entry(dir, &fname, &page);
+#endif
 	if (de && inode->i_ino == le32_to_cpu(de->ino))
 		goto out_unmap_put;
 
@@ -399,7 +403,7 @@ retry_dn:
 	err = get_dnode_of_data(&dn, start, ALLOC_NODE);
 	if (err) {
 		if (err == -ENOMEM) {
-			congestion_wait(BLK_RW_ASYNC, HZ/50);
+			congestion_wait(BLK_RW_ASYNC, msecs_to_jiffies(20));
 			goto retry_dn;
 		}
 		goto out;
@@ -461,7 +465,8 @@ retry_prev:
 			err = check_index_in_prev_nodes(sbi, dest, &dn);
 			if (err) {
 				if (err == -ENOMEM) {
-					congestion_wait(BLK_RW_ASYNC, HZ/50);
+					congestion_wait(BLK_RW_ASYNC,
+							msecs_to_jiffies(20));
 					goto retry_prev;
 				}
 				goto err;
