@@ -358,7 +358,7 @@ CC_FLAGS := -Ofast -fmodulo-sched -fmodulo-sched-allow-regmoves \
 	-funsafe-math-optimizations \
 	-fmodulo-sched -fmodulo-sched-allow-regmoves \
 	-fivopts -floop-nest-optimize -fgcse-las \
-	-mcpu=cortex-a53 -mtune=cortex-a53 \
+	-mtune=cortex-a53 \
 	-Wno-maybe-uninitialized -Wno-misleading-indentation \
 	-Wno-array-bounds -Wno-shift-overflow
 
@@ -425,11 +425,11 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		-std=gnu89 \
 		$(CC_FLAGS)
 
-KBUILD_AFLAGS_KERNEL := $(GEN_OPT_FLAGS)
-KBUILD_CFLAGS_KERNEL := $(GEN_OPT_FLAGS)
+KBUILD_AFLAGS_KERNEL := 
+KBUILD_CFLAGS_KERNEL := 
 KBUILD_AFLAGS   := -D__ASSEMBLY__
-KBUILD_AFLAGS_MODULE  := -DMODULE $(GEN_OPT_FLAGS)
-KBUILD_CFLAGS_MODULE  := -DMODULE $(GEN_OPT_FLAGS)
+KBUILD_AFLAGS_MODULE  := -DMODULE 
+KBUILD_CFLAGS_MODULE  := -DMODULE 
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
