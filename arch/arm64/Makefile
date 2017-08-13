@@ -17,8 +17,17 @@ GZFLAGS		:=-9
 
 KBUILD_DEFCONFIG := defconfig
 
+GEN_OPT_FLAGS := $(call cc-option,-mcpu=cortex-a53+crc+crypto) \
+ -g0 \
+ -DNDEBUG \
+ -fomit-frame-pointer \
+ -fmodulo-sched \
+ -fmodulo-sched-allow-regmoves \
+ -fivopts
+
 KBUILD_CFLAGS	+= -mgeneral-regs-only
 KBUILD_CFLAGS	+= -fno-pic
+KBUILD_CFLAGS	+= $(GEN_OPT_FLAGS)
 KBUILD_CFLAGS	+= $(call cc-option, -mpc-relative-literal-loads)
 
 ifeq ($(CONFIG_CPU_BIG_ENDIAN), y)
