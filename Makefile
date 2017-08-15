@@ -361,7 +361,7 @@ CC_FLAGS := -Ofast -fmodulo-sched -fmodulo-sched-allow-regmoves \
 	-funsafe-math-optimizations \
 	-fmodulo-sched -fmodulo-sched-allow-regmoves \
 	-fivopts -floop-nest-optimize -fgcse-las \
-	-mcpu=cortex-a53+crc+crypto \
+	-mtune=cortex-a53 \
 	-Wno-maybe-uninitialized -Wno-misleading-indentation \
 	-Wno-array-bounds -Wno-shift-overflow
 
@@ -392,7 +392,7 @@ CHECK		= sparse
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
 
-KERNELFLAGS	= -DNDEBUG -mcpu=cortex-a53+crc+crypto -fgcse-las
+KERNELFLAGS	= -DNDEBUG -mtune=cortex-a53 -fgcse-las
 CFLAGS_MODULE   = $(KERNELFLAGS)
 AFLAGS_MODULE   = $(KERNELFLAGS)
 LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
@@ -400,7 +400,7 @@ CFLAGS_KERNEL	= $(KERNELFLAGS)
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage -fno-tree-loop-im
 
-GEN_OPT_FLAGS := $(call cc-option,-mcpu=cortex-a53+crc+crypto) \
+GEN_OPT_FLAGS := $(call cc-option,-mtune=cortex-a53) \
  -g0 \
  -DNDEBUG \
  -fomit-frame-pointer \
