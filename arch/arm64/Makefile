@@ -17,7 +17,7 @@ GZFLAGS		:=-9
 
 KBUILD_DEFCONFIG := defconfig
 
-GEN_OPT_FLAGS := $(call cc-option,-mcpu=cortex-a53+crc+crypto) \
+GEN_OPT_FLAGS := $(call cc-option,-mtune=cortex-a53) \
  -g0 \
  -DNDEBUG \
  -fomit-frame-pointer \
