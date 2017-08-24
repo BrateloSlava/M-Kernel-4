@@ -1,7 +1,13 @@
+choice
+	prompt "Default CPU hotplugging variant"
+	default NONE_HOTPLUG
+
+config NONE_HOTPLUG
+	bool "Disable any hotplugging"
+
 config ASMP
  	bool "Multi-core automatic hotplug support"
  	depends on SMP
- 	default n
  	help
  	Automatically hotplugs the multiple cpu cores on and off
  	based on cpu load and suspend stat
@@ -13,3 +19,11 @@ config ASMP
 
 	  For MPU based protection-enabled targets please refer to
 	  MSM_KERNEL_PROTECT_MPU
+
+config LAZYPLUG
+	bool "Conservative hotplugging for generic devices"
+	help
+	  This enables the conservative hotplugging, lazyplug by arter97
+	  based on intelli_plug. Refer to the comments for more info.
+
+endchoice
