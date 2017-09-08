@@ -24,12 +24,14 @@
 #include <linux/cpufreq.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
-#include <linux/input/state_notifier.h>
+#include <linux/state_notifier.h>
 
 #define AUTOSMP			"autosmp"
 
 #define HOTPLUG_ENABLED		(0)
 #define HOTPLUG_INIT_DELAY	(30000)
+
+#define DEBUG_ENABLED 0
 
 static int enabled = HOTPLUG_ENABLED;
 
@@ -40,6 +42,7 @@ static struct kobject *asmp_kobj;
 static struct asmp_tunables {
 	int delay;
 	int scroff_single_core;
+	int scron_all_core;
 	int max_cpus;
 	int min_cpus;
 	int cpufreq_up;
@@ -47,10 +50,11 @@ static struct asmp_tunables {
 	int cycle_up;
 	int cycle_down;
 } tunables = {
-	.delay = 50,
+	.delay = 100,
 	.scroff_single_core = 0,
+	.scron_all_core = 1, // Force all cores to be active
 	.max_cpus = CONFIG_NR_CPUS,
-	.min_cpus = 2,
+	.min_cpus = 1,
 	.cpufreq_up = 60,
 	.cpufreq_down = 40,
 	.cycle_up = 2,
@@ -130,8 +134,9 @@ static void asmp_suspend(void)
 	}
 
 	
-
+#if DEBUG_ENABLED
 	pr_info("%s: suspended\n", __func__);
+#endif
 }
 
 static void asmp_resume(void)
@@ -153,20 +158,28 @@ static void asmp_resume(void)
 		queue_delayed_work(asmp_wq, &asmp_work, msecs_to_jiffies(tunables.delay));
 	}
 
-	
-
+#if DEBUG_ENABLED
 	pr_info("%s: resumed\n", __func__);
+#endif
 }
 
 static int __ref state_notifier_callback(struct notifier_block *this,
 				   unsigned long event, void *data)
 {
+	unsigned int cpu;
+
 	if (!enabled)
 		goto out;
 
 	switch (event) {
 	case STATE_NOTIFIER_ACTIVE:
 		asmp_resume();
+		if (tunables.scron_all_core) {
+			/* Wake-Up All the Cores */
+			for_each_possible_cpu(cpu)
+				if (!cpu_online(cpu))
+					cpu_up(cpu);
+		}
 		break;
 	case STATE_NOTIFIER_SUSPEND:
 		asmp_suspend();
@@ -283,6 +296,7 @@ static ssize_t store_enabled(struct device *dev,
 
 show_one(delay);
 show_one(scroff_single_core);
+show_one(scron_all_core);
 show_one(min_cpus);
 show_one(max_cpus);
 show_one(cpufreq_up);
@@ -292,6 +306,7 @@ show_one(cycle_down);
 
 store_one(delay, 10, 10000);
 store_one(scroff_single_core, 0, 1);
+store_one(scron_all_core, 0, 1);
 store_one(min_cpus, 1, tunables.max_cpus);
 store_one(max_cpus, tunables.min_cpus, 8);
 store_one(cpufreq_up, 1, 100);
@@ -302,6 +317,7 @@ store_one(cycle_down, 1, 6);
 create_one(enabled);
 create_one(delay);
 create_one(scroff_single_core);
+create_one(scron_all_core);
 create_one(min_cpus);
 create_one(max_cpus);
 create_one(cpufreq_up);
@@ -313,6 +329,7 @@ static struct attribute *asmp_attrs[] = {
 	&dev_attr_enabled.attr,
 	&dev_attr_delay.attr,
 	&dev_attr_scroff_single_core.attr,
+	&dev_attr_scron_all_core.attr,
 	&dev_attr_min_cpus.attr,
 	&dev_attr_max_cpus.attr,
 	&dev_attr_cpufreq_up.attr,
