@@ -27,13 +27,3 @@ config LAZYPLUG
 	  based on intelli_plug. Refer to the comments for more info.
 
 endchoice
-
-if ASMP
-
-config ASMP_SUSPEND
-	bool "Enable PowerSuspend/EarlySuspend support for ASMP"
-	depends on ASMP
-	default y
-
-endif
-
