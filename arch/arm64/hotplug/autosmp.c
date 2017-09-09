@@ -176,9 +176,11 @@ static int __ref state_notifier_callback(struct notifier_block *this,
 		asmp_resume();
 		if (tunables.scron_all_core) {
 			/* Wake-Up All the Cores */
-			for_each_possible_cpu(cpu)
-				if (!cpu_online(cpu))
-					cpu_up(cpu);
+			for_each_cpu_not(cpu, cpu_online_mask) {
+				if (cpu == 0)
+					continue;
+				cpu_up(cpu);
+			}
 		}
 		break;
 	case STATE_NOTIFIER_SUSPEND:
