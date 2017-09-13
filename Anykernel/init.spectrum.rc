@@ -82,21 +82,22 @@ on property:sys.boot_completed=1
     write /sys/module/cpu_boost/parameters/load_based_syncs N
     write /sys/module/cpu_boost/parameters/shed_boost_on_input N
 
-# Temporary
-    write /sys/module/msm_thermal/core_control/enabled 0
-
 # Congigure Simple Thermal driver
-#    write /sys/kernel/msm_thermal/zone0 "1555200 1536000 40 38"
-#    write /sys/kernel/msm_thermal/zone1 "1478400 1536000 41 40"
-#    write /sys/kernel/msm_thermal/zone2 "1478400 1440000 42 41"
-#    write /sys/kernel/msm_thermal/zone3 "1344000 1440000 43 42"
-#    write /sys/kernel/msm_thermal/zone4 "1344000 1344000 44 43"
-#    write /sys/kernel/msm_thermal/zone5 "1248000 1344000 46 44"
-#    write /sys/kernel/msm_thermal/zone6 "960000 1248000 48 46"
-#    write /sys/kernel/msm_thermal/zone7 "960000 960000 53 50"
-#    write /sys/kernel/msm_thermal/zone8 "768000 768000 65 60"
-#    write /sys/kernel/msm_thermal/sampling_ms 8000
-#    write /sys/kernel/msm_thermal/enabled 0
+    write /sys/kernel/msm_thermal/enabled 0
+    write /sys/kernel/msm_thermal/zone0 "2208000 2150400 40 39"
+    write /sys/kernel/msm_thermal/zone1 "2150400 2016000 41 40"
+    write /sys/kernel/msm_thermal/zone2 "2016000 1958400 42 41"
+    write /sys/kernel/msm_thermal/zone3 "1958400 2016000 43 42"
+    write /sys/kernel/msm_thermal/zone4 "1804800 1958400 46 43"
+    write /sys/kernel/msm_thermal/zone5 "1689600 1804800 48 46"
+    write /sys/kernel/msm_thermal/zone6 "1401600 1689600 51 48"
+    write /sys/kernel/msm_thermal/zone7 "1209600 1401600 54 51"
+    write /sys/kernel/msm_thermal/zone8 "1036800 1209600 56 54"
+    write /sys/kernel/msm_thermal/zone9 "806400 1036800 58 56"
+    write /sys/kernel/msm_thermal/zone10 "652800 806400 60 58"
+    write /sys/kernel/msm_thermal/zone11 "400457 652800 62 60"
+    write /sys/kernel/msm_thermal/sampling_ms 8000
+    write /sys/kernel/msm_thermal/enabled 1
 
 # Balance (default profile)
 on property:persist.spectrum.profile=0
@@ -126,4 +127,3 @@ on property:persist.spectrum.profile=2
 on property:persist.spectrum.profile=3
     write /sys/class/leds/lcd-backlight/max_brightness 255
     write /sys/module/adreno_idler/parameters/adreno_idler_active 0
-
