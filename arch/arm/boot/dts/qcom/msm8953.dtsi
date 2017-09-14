@@ -548,7 +548,7 @@
 	qcom,msm-thermal-simple {
 		compatible = "qcom,msm-thermal-simple";
 		qcom,thermal-vadc = <&pm8953_vadc>;
-		qcom,adc-channel = <32>; /* xo_therm */
+		qcom,adc-channel = <114>; /* xo_therm */
 	};
 
 	qcom,bcl {
