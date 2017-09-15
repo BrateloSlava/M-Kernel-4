@@ -99,19 +99,6 @@ on property:sys.boot_completed=1
     write /sys/kernel/msm_thermal/sampling_ms 8000
     write /sys/kernel/msm_thermal/enabled 1
 
-# Congigure ASMP
-    write /sys/kernel/autosmp/conf/enabled 0
-    write /sys/kernel/autosmp/conf/cpufreq_down 40
-    write /sys/kernel/autosmp/conf/cpufreq_up 60
-    write /sys/kernel/autosmp/conf/cycle_down 2
-    write /sys/kernel/autosmp/conf/cycle_up 2
-    write /sys/kernel/autosmp/conf/delay 100
-    write /sys/kernel/autosmp/conf/max_cpus 8
-    write /sys/kernel/autosmp/conf/min_cpus 1
-    write /sys/kernel/autosmp/conf/scroff_single_core 1
-    write /sys/kernel/autosmp/conf/scron_all_core 1
-    write /sys/kernel/autosmp/conf/enabled 1
-
 # Balance (default profile)
 on property:persist.spectrum.profile=0
     write /sys/class/leds/lcd-backlight/max_brightness 255
@@ -140,4 +127,3 @@ on property:persist.spectrum.profile=2
 on property:persist.spectrum.profile=3
     write /sys/class/leds/lcd-backlight/max_brightness 255
     write /sys/module/adreno_idler/parameters/adreno_idler_active 0
-
