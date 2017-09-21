@@ -2595,15 +2595,22 @@ hdd_parse_reassoc_v1(hdd_adapter_t *pAdapter, const char *command)
  * @pAdapter: Adapter upon which the command was received
  * @command: command that was received, ASCII command followed
  *                    by binary data
+ * @total_len: Total length of the command received
  *
  * Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_reassoc_v2(hdd_adapter_t *pAdapter, const char *command)
+hdd_parse_reassoc_v2(hdd_adapter_t *pAdapter, const char *command,
+		     int total_len)
 {
 	struct android_wifi_reassoc_params params;
 	tSirMacAddr bssid;
 	int ret;
+
+	if (total_len < sizeof(params) + 8) {
+		hddLog(LOGE, FL("Invalid command length"));
+		return -EINVAL;
+	}
 
 	/* The params are located after "REASSOC " */
 	memcpy(&params, command + 8, sizeof(params));
@@ -2628,11 +2635,12 @@ hdd_parse_reassoc_v2(hdd_adapter_t *pAdapter, const char *command)
  *
  *  @pAdapter: Adapter upon which the command was received
  *  @command: command that was received
+ *  @total_len: Total length of the command received
  *
  *  Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_reassoc(hdd_adapter_t *pAdapter, const char *command)
+hdd_parse_reassoc(hdd_adapter_t *pAdapter, const char *command, int total_len)
 {
 	int ret;
 
@@ -2650,10 +2658,16 @@ hdd_parse_reassoc(hdd_adapter_t *pAdapter, const char *command)
 	 *           1111111111222222
 	 * 01234567890123456789012345
 	 */
+
+	if (total_len < 26) {
+		hddLog(LOGE, FL("Invalid command (total_len=%d)"), total_len);
+		return -EINVAL;
+	}
+
 	if (command[25])
 		ret = hdd_parse_reassoc_v1(pAdapter, command);
 	else
-		ret = hdd_parse_reassoc_v2(pAdapter, command);
+		ret = hdd_parse_reassoc_v2(pAdapter, command, total_len);
 
 	return ret;
 }
@@ -2811,6 +2825,14 @@ static int hdd_get_dwell_time(hdd_config_t *pCfg, tANI_U8 *command, char *extra,
     return ret;
 }
 
+int hdd_drv_cmd_validate(tANI_U8 *command, int len)
+{
+	if (command[len] != ' ')
+		return -EINVAL;
+
+	return 0;
+}
+
 static int hdd_set_dwell_time(hdd_adapter_t *pAdapter, tANI_U8 *command)
 {
     tHalHandle hHal;
@@ -2833,6 +2855,9 @@ static int hdd_set_dwell_time(hdd_adapter_t *pAdapter, tANI_U8 *command)
 
     if (strncmp(command, "SETDWELLTIME ACTIVE MAX", 23) == 0 )
     {
+        if (hdd_drv_cmd_validate(command, 23))
+            return -EINVAL;
+
         value = value + 24;
         temp = kstrtou32(value, 10, &val);
         if (temp != 0 || val < CFG_ACTIVE_MAX_CHANNEL_TIME_MIN ||
@@ -2849,6 +2874,9 @@ static int hdd_set_dwell_time(hdd_adapter_t *pAdapter, tANI_U8 *command)
     }
     else if (strncmp(command, "SETDWELLTIME ACTIVE MIN", 23) == 0)
     {
+        if (hdd_drv_cmd_validate(command, 23))
+            return -EINVAL;
+
         value = value + 24;
         temp = kstrtou32(value, 10, &val);
         if (temp !=0 || val < CFG_ACTIVE_MIN_CHANNEL_TIME_MIN  ||
@@ -2865,6 +2893,9 @@ static int hdd_set_dwell_time(hdd_adapter_t *pAdapter, tANI_U8 *command)
     }
     else if (strncmp(command, "SETDWELLTIME PASSIVE MAX", 24) == 0)
     {
+        if (hdd_drv_cmd_validate(command, 24))
+            return -EINVAL;
+
         value = value + 25;
         temp = kstrtou32(value, 10, &val);
         if (temp != 0 || val < CFG_PASSIVE_MAX_CHANNEL_TIME_MIN ||
@@ -2881,6 +2912,9 @@ static int hdd_set_dwell_time(hdd_adapter_t *pAdapter, tANI_U8 *command)
     }
     else if (strncmp(command, "SETDWELLTIME PASSIVE MIN", 24) == 0)
     {
+        if (hdd_drv_cmd_validate(command, 24))
+            return -EINVAL;
+
         value = value + 25;
         temp = kstrtou32(value, 10, &val);
         if (temp != 0 || val < CFG_PASSIVE_MIN_CHANNEL_TIME_MIN ||
@@ -2897,6 +2931,9 @@ static int hdd_set_dwell_time(hdd_adapter_t *pAdapter, tANI_U8 *command)
     }
     else if (strncmp(command, "SETDWELLTIME", 12) == 0)
     {
+        if (hdd_drv_cmd_validate(command, 12))
+            return -EINVAL;
+
         value = value + 13;
         temp = kstrtou32(value, 10, &val);
         if (temp != 0 || val < CFG_ACTIVE_MAX_CHANNEL_TIME_MIN ||
@@ -3206,6 +3243,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            tANI_U8 *ptr = command ;
 
+           ret = hdd_drv_cmd_validate(command, 7);
+           if (ret)
+               goto exit;
+
            /* Change band request received */
 
            /* First 8 bytes will have "SETBAND " and
@@ -3224,18 +3265,32 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        else if(strncmp(command, "SETWMMPS", 8) == 0)
        {
            tANI_U8 *ptr = command;
+
+           ret = hdd_drv_cmd_validate(command, 8);
+           if (ret)
+               goto exit;
+
            ret = hdd_wmmps_helper(pAdapter, ptr);
        }
 
        else if(strncmp(command, "TDLSSCAN", 8) == 0)
        {
            tANI_U8 *ptr  = command;
+
+           ret = hdd_drv_cmd_validate(command, 8);
+           if (ret)
+               goto exit;
+
            ret = hdd_set_tdls_scan_type(pAdapter, ptr);
        }
 
        else if ( strncasecmp(command, "COUNTRY", 7) == 0 )
        {
            char *country_code;
+
+           ret = hdd_drv_cmd_validate(command, 7);
+           if (ret)
+               goto exit;
 
            country_code = command + 8;
 
@@ -3283,7 +3338,13 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        else if(strncmp(command, "SETSUSPENDMODE", 14) == 0)
        {
            int suspend = 0;
-           tANI_U8 *ptr = (tANI_U8*)command + 15;
+           tANI_U8 *ptr;
+
+           ret = hdd_drv_cmd_validate(command, 14);
+           if (ret)
+               goto exit;
+
+           ptr = (tANI_U8*)command + 15;
 
            suspend = *ptr - '0';
             MTRACE(vos_trace(VOS_MODULE_ID_HDD,
@@ -3298,6 +3359,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_S8 rssi = 0;
            tANI_U8 lookUpThreshold = CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_DEFAULT;
            eHalStatus status = eHAL_STATUS_SUCCESS;
+
+           ret = hdd_drv_cmd_validate(command, 14);
+           if (ret)
+               goto exit;
 
            /* Move pointer to ahead of SETROAMTRIGGER<delimiter> */
            value = value + 15;
@@ -3377,6 +3442,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 roamScanPeriod = 0;
            tANI_U16 neighborEmptyScanRefreshPeriod = CFG_EMPTY_SCAN_REFRESH_PERIOD_DEFAULT;
 
+           ret = hdd_drv_cmd_validate(command, 17);
+           if (ret)
+               goto exit;
+
            /* input refresh period is in terms of seconds */
            /* Move pointer to ahead of SETROAMSCANPERIOD<delimiter> */
            value = value + 18;
@@ -3444,6 +3513,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 roamScanRefreshPeriod = 0;
            tANI_U16 neighborScanRefreshPeriod = CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_DEFAULT;
 
+           ret = hdd_drv_cmd_validate(command, 24);
+           if (ret)
+               goto exit;
+
            /* input refresh period is in terms of seconds */
            /* Move pointer to ahead of SETROAMSCANREFRESHPERIOD<delimiter> */
            value = value + 25;
@@ -3506,6 +3579,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            tANI_U8 *value = command;
 	   tANI_BOOLEAN roamMode = CFG_LFR_FEATURE_ENABLED_DEFAULT;
+
+           ret = hdd_drv_cmd_validate(command, SIZE_OF_SETROAMMODE);
+           if (ret)
+               goto exit;
 
 	   /* Move pointer to ahead of SETROAMMODE<delimiter> */
 	   value = value + SIZE_OF_SETROAMMODE + 1;
@@ -3583,6 +3660,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            tANI_U8 *value = command;
            tANI_U8 roamRssiDiff = CFG_ROAM_RSSI_DIFF_DEFAULT;
+
+           ret = hdd_drv_cmd_validate(command, 12);
+           if (ret)
+               goto exit;
 
            /* Move pointer to ahead of SETROAMDELTA<delimiter> */
            value = value + 13;
@@ -3832,6 +3913,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 *value = command;
            tANI_U8 minTime = CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_DEFAULT;
 
+           ret = hdd_drv_cmd_validate(command, 25);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of SETROAMSCANCHANNELMINTIME<delimiter> */
            value = value + 26;
            /* Convert the value from ascii to integer */
@@ -4016,6 +4101,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 *value = command;
            tANI_U16 maxTime = CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_DEFAULT;
 
+           ret = hdd_drv_cmd_validate(command, 18);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of SETSCANCHANNELTIME<delimiter> */
            value = value + 19;
            /* Convert the value from ascii to integer */
@@ -4072,6 +4161,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            tANI_U8 *value = command;
            tANI_U16 val = CFG_NEIGHBOR_SCAN_TIMER_PERIOD_DEFAULT;
+
+           ret = hdd_drv_cmd_validate(command, 15);
+           if (ret)
+               goto exit;
 
            /* Move pointer to ahead of SETSCANHOMETIME<delimiter> */
            value = value + 16;
@@ -4130,6 +4223,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 *value = command;
            tANI_U8 val = CFG_ROAM_INTRA_BAND_DEFAULT;
 
+           ret = hdd_drv_cmd_validate(command, 16);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of SETROAMINTRABAND<delimiter> */
            value = value + 17;
            /* Convert the value from ascii to integer */
@@ -4186,6 +4283,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 *value = command;
            tANI_U8 nProbes = CFG_ROAM_SCAN_N_PROBES_DEFAULT;
 
+           ret = hdd_drv_cmd_validate(command, 14);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of SETSCANNPROBES<delimiter> */
            value = value + 15;
            /* Convert the value from ascii to integer */
@@ -4239,6 +4340,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            tANI_U8 *value = command;
            tANI_U16 homeAwayTime = CFG_ROAM_SCAN_HOME_AWAY_TIME_DEFAULT;
+
+           ret = hdd_drv_cmd_validate(command, 19);
+           if (ret)
+               goto exit;
 
            /* Move pointer to ahead of SETSCANHOMEAWAYTIME<delimiter> */
            /* input value is in units of msec */
@@ -4294,7 +4399,11 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        }
        else if (strncmp(command, "REASSOC", 7) == 0)
        {
-           ret = hdd_parse_reassoc(pAdapter, command);
+           ret = hdd_drv_cmd_validate(command, 7);
+           if (ret)
+               goto exit;
+
+           ret = hdd_parse_reassoc(pAdapter, command, priv_data.total_len);
            if (!ret)
                goto exit;
        }
@@ -4302,6 +4411,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            tANI_U8 *value = command;
            tANI_BOOLEAN wesMode = CFG_ENABLE_WES_MODE_NAME_DEFAULT;
+
+           ret = hdd_drv_cmd_validate(command, 10);
+           if (ret)
+               goto exit;
 
            /* Move pointer to ahead of SETWESMODE<delimiter> */
            value = value + 11;
@@ -4358,6 +4471,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 *value = command;
            tANI_U8 lfrMode = CFG_LFR_FEATURE_ENABLED_DEFAULT;
 
+           ret = hdd_drv_cmd_validate(command, 11);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of SETFASTROAM<delimiter> */
            value = value + 12;
            /* Convert the value from ascii to integer */
@@ -4399,6 +4516,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 *value = command;
            tANI_U8 ft = CFG_FAST_TRANSITION_ENABLED_NAME_DEFAULT;
 
+           ret = hdd_drv_cmd_validate(command, 17);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of SETFASTROAM<delimiter> */
            value = value + 18;
            /* Convert the value from ascii to integer */
@@ -4437,6 +4558,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            tANI_U8 *value = command;
            tANI_U8 dfsScanMode = DFS_CHNL_SCAN_ENABLED_NORMAL;
+
+           ret = hdd_drv_cmd_validate(command, 14);
+           if (ret)
+               goto exit;
 
            /* Move pointer to ahead of SETDFSSCANMODE<delimiter> */
            value = value + 15;
@@ -4501,6 +4626,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 *value = command;
            tANI_U8 eseMode = CFG_ESE_FEATURE_ENABLED_DEFAULT;
 
+           ret = hdd_drv_cmd_validate(command, 10);
+           if (ret)
+               goto exit;
+
            /* Check if the features OKC/ESE/11R are supported simultaneously,
               then this operation is not permitted (return FAILURE) */
            if (sme_getIsEseFeatureEnabled((tHalHandle)(pHddCtx->hHal)) &&
@@ -4552,6 +4681,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 *value = command;
            tANI_BOOLEAN roamScanControl = 0;
 
+           ret = hdd_drv_cmd_validate(command, 18);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of SETROAMSCANCONTROL<delimiter> */
            value = value + 19;
            /* Convert the value from ascii to integer */
@@ -4584,6 +4717,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            tANI_U8 *value = command;
            tANI_U8 okcMode = CFG_OKC_FEATURE_ENABLED_DEFAULT;
+
+           ret = hdd_drv_cmd_validate(command, 10);
+           if (ret)
+               goto exit;
 
            /* Check if the features OKC/ESE/11R are supported simultaneously,
               then this operation is not permitted (return FAILURE) */
@@ -4654,6 +4791,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tANI_U8 filterType = 0;
            tANI_U8 *value = command;
 
+           ret = hdd_drv_cmd_validate(command, 21);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of ENABLE_PKTFILTER_IPV6<delimiter> */
            value = value + 22;
 
@@ -4685,6 +4826,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            char *dhcpPhase;
            int ret;
+
+           ret = hdd_drv_cmd_validate(command, 10);
+           if (ret)
+               goto exit;
 
            dhcpPhase = command + 11;
            if ('1' == *dhcpPhase)
@@ -4752,6 +4897,11 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        {
            tANI_U8 filterType = 0;
            tANI_U8 *value;
+
+           ret = hdd_drv_cmd_validate(command, 8);
+           if (ret)
+               goto exit;
+
            value = command + 9;
 
            /* Convert the value from ascii to integer */
@@ -4796,6 +4946,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            int      targetRate;
            tSirRateUpdateInd *rateUpdate;
            eHalStatus status;
+
+           ret = hdd_drv_cmd_validate(command, 9);
+           if (ret)
+               goto exit;
 
            /* Only valid for SAP mode */
            if (WLAN_HDD_SOFTAP != pAdapter->device_mode)
@@ -5589,6 +5743,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            tAniTrafStrmMetrics tsmMetrics;
            pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
+           ret = hdd_drv_cmd_validate(command, 11);
+           if (ret)
+               goto exit;
+
            /* if not associated, return error */
            if (eConnectionState_Associated != pHddStaCtx->conn_info.connState)
            {
@@ -5798,6 +5956,11 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        else if (strncmp(command, "TDLSSECONDARYCHANNELOFFSET", 26) == 0) {
            tANI_U8 *value = command;
            int set_value;
+
+           ret = hdd_drv_cmd_validate(command, 26);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of TDLSOFFCH*/
            value += 26;
            if (!(sscanf(value, "%d", &set_value))) {
@@ -5820,6 +5983,11 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        } else if (strncmp(command, "TDLSOFFCHANNELMODE", 18) == 0) {
            tANI_U8 *value = command;
            int set_value;
+
+           ret = hdd_drv_cmd_validate(command, 18);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of tdlsoffchnmode*/
            value += 18;
            ret = sscanf(value, "%d", &set_value);
@@ -5841,6 +6009,11 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        } else if (strncmp(command, "TDLSOFFCHANNEL", 14) == 0) {
            tANI_U8 *value = command;
            int set_value;
+
+           ret = hdd_drv_cmd_validate(command, 14);
+           if (ret)
+               goto exit;
+
            /* Move pointer to ahead of TDLSOFFCH*/
            value += 14;
            ret = sscanf(value, "%d", &set_value);
@@ -5871,8 +6044,13 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
            fwStatsContext_t fwStatsCtx;
            tSirFwStatsResult *fwStatsRsp = &(pAdapter->fwStatsRsp);
            tANI_U8 *ptr = command;
-           int stats = *(ptr + 11) - '0';
+           int stats;
 
+           ret = hdd_drv_cmd_validate(command, 10);
+           if (ret)
+               goto exit;
+
+           stats = *(ptr + 11) - '0';
            hddLog(VOS_TRACE_LEVEL_INFO, FL("stats = %d "),stats);
            if (!IS_FEATURE_FW_STATS_ENABLE)
            {
@@ -5966,6 +6144,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        }
        else if (strncasecmp(command, "SET_FCC_CHANNEL", 15) == 0)
        {
+           ret = hdd_drv_cmd_validate(command, 15);
+           if (ret)
+               goto exit;
+
           /*
            * this command wld be called by user-space when it detects WLAN
            * ON after airplane mode is set. When APM is set, WLAN turns off.
@@ -5979,6 +6161,10 @@ static int hdd_driver_command(hdd_adapter_t *pAdapter,
        }
        else if (strncasecmp(command, "DISABLE_CA_EVENT", 16) == 0)
        {
+           ret = hdd_drv_cmd_validate(command, 16);
+           if (ret)
+               goto exit;
+
            ret = hdd_enable_disable_ca_event(pHddCtx, command, 16);
        }
        else {
