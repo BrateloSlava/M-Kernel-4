@@ -52,11 +52,6 @@ module_param(enable_netlink_ws, bool, 0644);
 static bool enable_wlan_wd_wake_ws = true;
 module_param(enable_wlan_wd_wake_ws, bool, 0644);
 
-static bool enable_alarmtimer_ws = false;
-module_param(enable_alarmtimer_ws, bool, 0644);
-static bool enable_bq_delt_soc_wake_lock_ws = false;
-module_param(enable_bq_delt_soc_wake_lock_ws, bool, 0644);
-
 /*
  * If set, the suspend/hibernate code will abort transitions to a sleep state
  * if wakeup events are registered during or immediately before the transition.
@@ -504,10 +499,6 @@ static bool wakeup_source_blocker(struct wakeup_source *ws)
 				!strncmp(ws->name, "wlan", wslen)) ||
 			(!enable_timerfd_ws &&
 				!strncmp(ws->name, "[timerfd]", wslen)) ||
-			(!enable_alarmtimer_ws &&
-				!strncmp(ws->name, "alarmtimer", wslen)) ||
-			(!enable_bq_delt_soc_wake_lock_ws &&
-				!strncmp(ws->name, "bq_delt_soc_wake_lock", wslen)) ||
 			(!enable_netlink_ws &&
 				!strncmp(ws->name, "NETLINK", wslen)) ||
 			(!enable_wlan_wd_wake_ws &&
