@@ -33,8 +33,6 @@ static bool enable_timerfd_ws = true;
 module_param(enable_timerfd_ws, bool, 0644);
 static bool enable_netlink_ws = true;
 module_param(enable_netlink_ws, bool, 0644);
-static bool enable_wlan_wd_wake_ws = true;
-module_param(enable_wlan_wd_wake_ws, bool, 0644);
 
 /*
  * If set, the suspend/hibernate code will abort transitions to a sleep state
@@ -482,9 +480,7 @@ static bool wakeup_source_blocker(struct wakeup_source *ws)
 			(!enable_timerfd_ws &&
 				!strncmp(ws->name, "[timerfd]", wslen)) ||
 			(!enable_netlink_ws &&
-				!strncmp(ws->name, "NETLINK", wslen)) ||
-			(!enable_wlan_wd_wake_ws &&
-				!strncmp(ws->name, "wlan_wd_wake", wslen))) {
+				!strncmp(ws->name, "NETLINK", wslen))) {
 			if (ws->active) {
 				wakeup_source_deactivate(ws);
 				pr_info("forcefully deactivate wakeup source: %s\n",
