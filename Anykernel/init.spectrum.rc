@@ -23,16 +23,6 @@ on property:sys.boot_completed=1
 # Disable Gentle Fair Sleepers
     write /sys/kernel/sched/gentle_fair_sleepers 0
 
-# Disable some wakelocks
-    write /sys/module/wakeup/parameters/enable_wlan_rx_wake_ws 0
-    write /sys/module/wakeup/parameters/enable_wlan_ctrl_wake_ws 0
-    write /sys/module/wakeup/parameters/enable_wlan_wake_ws 0
-    write /sys/module/wakeup/parameters/enable_msm_hsic_ws 0
-    write /sys/module/wakeup/parameters/enable_qcom_rx_wakelock_ws 0
-    write /sys/module/wakeup/parameters/enable_netlink_ws 0
-    write /sys/module/wakeup/parameters/enable_ipa_ws 0
-    write /sys/module/wakeup/parameters/enable_timerfd_ws 0
-
 # Start Power tweaks
     exec u:r:init:s0 root root -- /init.special_power.sh
     exec u:r:su:s0 root root -- /init.special_power.sh
