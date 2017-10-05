@@ -198,7 +198,7 @@ struct cpufreq_interactive_tunables {
 	bool powersave_bias;
 
 	/* Maximum frequency while the screen is off */
-#define DEFAULT_SCREEN_OFF_MAX 1286400
+#define DEFAULT_SCREEN_OFF_MAX 1209600
 	unsigned long screen_off_max;
 };
 
@@ -1553,7 +1553,7 @@ static ssize_t store_screen_off_maxfreq(
 	if (ret < 0)
 		return ret;
 
-	if (val < 384000)
+	if (val < 652800)
 		tunables->screen_off_max = DEFAULT_SCREEN_OFF_MAX;
 	else
 		tunables->screen_off_max = val;
@@ -1867,6 +1867,10 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 		tunables->usage_count = 1;
 #ifdef CONFIG_ARCH_MSM8996
 		tunables->hispeed_freq = 1286400;
+		tunables->max_freq_hysteresis = 99000;
+#endif
+#ifdef CONFIG_ARCH_MSM8953
+		tunables->hispeed_freq = 1036800;
 		tunables->max_freq_hysteresis = 99000;
 #endif
 		policy->governor_data = tunables;
