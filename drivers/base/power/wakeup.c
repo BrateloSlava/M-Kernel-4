@@ -16,11 +16,10 @@
 #include <linux/debugfs.h>
 #include <linux/types.h>
 #include <linux/moduleparam.h>
+#include <linux/display_state.h>
 #include <linux/proc_fs.h>
 #include <trace/events/power.h>
 #include <linux/moduleparam.h>
-
-#include "power.h"
 
 static bool enable_si_ws = true;
 module_param(enable_si_ws, bool, 0644);
@@ -36,6 +35,8 @@ static bool enable_bluedroid_timer_ws = true;
 module_param(enable_bluedroid_timer_ws, bool, 0644);
 static bool enable_bluesleep_ws = true;
 module_param(enable_bluesleep_ws, bool, 0644);
+
+#include "power.h"
 
 static bool enable_qcom_rx_wakelock_ws = false;
 module_param(enable_qcom_rx_wakelock_ws, bool, 0644);
@@ -825,6 +826,10 @@ void pm_print_active_wakeup_sources(void)
 	struct wakeup_source *ws;
 	int active = 0;
 	struct wakeup_source *last_activity_ws = NULL;
+
+	// kinda pointless to force this routine during screen on
+	if (is_display_on())
+		return;
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(ws, &wakeup_sources, entry) {
