@@ -34,7 +34,7 @@ static unsigned long arg_cpu_max_c1 = 2208000;
 
 static int __init cpufreq_read_cpu_max_c1(char *cpu_max_c1)
 {
-	unsigned long ui_khz = 0L;;
+	unsigned long ui_khz = 0L;
 	int ret = 0;
 
 	ret = kstrtoul(cpu_max_c1, 0, &ui_khz);
@@ -66,7 +66,7 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 {
 	int ret = 0;
 	struct cpufreq_freqs freqs;
-	unsigned long rate = 0L;;
+	unsigned long rate = 0L;
 
 	freqs.old = policy->cur;
 	freqs.new = new_freq;
