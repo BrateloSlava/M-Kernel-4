@@ -1932,6 +1932,49 @@ static int goodix_parse_dt(struct device *dev,
 	return 0;
 }
 
+static int goodix_ts_proc_init(struct kernfs_node *sysfs_node_parent)
+{
+       int ret = 0;
+       char *buf, *path = NULL;
+       char *key_disabler_sysfs_node, *double_tap_sysfs_node;
+       struct proc_dir_entry *proc_entry_tp = NULL;
+       struct proc_dir_entry *proc_symlink_tmp = NULL;
+       buf = kzalloc(PATH_MAX, GFP_KERNEL);
+       if (buf)
+               path = kernfs_path(sysfs_node_parent, buf, PATH_MAX);
+
+       proc_entry_tp = proc_mkdir("touchpanel", NULL);
+       if (proc_entry_tp == NULL) {
+               pr_err("%s: Couldn't create touchpanel dir in procfs\n", __func__);
+               ret = -ENOMEM;
+       }
+
+       key_disabler_sysfs_node = kzalloc(PATH_MAX, GFP_KERNEL);
+       if (key_disabler_sysfs_node)
+               sprintf(key_disabler_sysfs_node, "/sys%s/%s", path, "disable_keys");
+       proc_symlink_tmp = proc_symlink("capacitive_keys_disable",
+                       proc_entry_tp, key_disabler_sysfs_node);
+       if (proc_symlink_tmp == NULL) {
+               pr_err("%s: Couldn't create capacitive_keys_enable symlink\n", __func__);
+               ret = -ENOMEM;
+       }
+
+       double_tap_sysfs_node = kzalloc(PATH_MAX, GFP_KERNEL);
+       if (double_tap_sysfs_node)
+               sprintf(double_tap_sysfs_node, "/sys%s/%s", path, "enable_dt2w");
+       proc_symlink_tmp = proc_symlink("enable_dt2w",
+               proc_entry_tp, double_tap_sysfs_node);
+       if (proc_symlink_tmp == NULL) {
+               ret = -ENOMEM;
+               pr_err("%s: Couldn't create double_tap_enable symlink\n", __func__);
+       }
+
+       kfree(buf);
+       kfree(key_disabler_sysfs_node);
+       kfree(double_tap_sysfs_node);
+       return ret;
+}
+
 /*******************************************************
 Function:
 	I2c probe.
@@ -2103,6 +2146,9 @@ static int goodix_ts_probe(struct i2c_client *client,
 						ret);
 		goto exit_remove_sysfs;
 	}
+
+
+	goodix_ts_proc_init(client->dev.kobj.sd);
 
 	init_done = true;
 	return 0;
