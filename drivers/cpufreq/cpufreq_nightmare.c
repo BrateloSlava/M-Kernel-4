@@ -62,14 +62,14 @@ static struct mutex gov_lock;
 #define DEFAULT_TIMER_RATE (20 * USEC_PER_MSEC)
 #define DEFAULT_TIMER_RATE_SUSP ((unsigned long)(50 * USEC_PER_MSEC))
 
-#define FREQ_RESPONSIVENESS			1113600
+#define FREQ_RESPONSIVENESS		1209600
 #define FREQ_RESPONSIVENESS_MAX		2150400
 
 #define FREQ_STEP_AT_MIN_FREQ		40
-#define FREQ_STEP					50
+#define FREQ_STEP			50
 #define FREQ_UP_BRAKE_AT_MIN_FREQ	40
-#define FREQ_UP_BRAKE				30
-#define FREQ_STEP_DEC				10
+#define FREQ_UP_BRAKE			30
+#define FREQ_STEP_DEC			10
 #define FREQ_STEP_DEC_AT_MAX_FREQ	10
 #define LOAD_MODE					1
 
